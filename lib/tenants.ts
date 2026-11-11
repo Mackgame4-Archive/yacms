@@ -3,6 +3,8 @@ import "server-only"
 import { Types } from "mongoose"
 
 import { dbConnect } from "@/lib/mongodb"
+import { ContentEntryModel } from "@/lib/models/content-entry"
+import { ContentTypeModel } from "@/lib/models/content-type"
 import { TenantModel, type TenantDocument } from "@/lib/models/tenant"
 
 export type SafeTenant = {
@@ -110,6 +112,17 @@ export async function deleteTenant(input: {
     _id: new Types.ObjectId(input.tenantId),
     ownerId: new Types.ObjectId(input.ownerId),
   })
+
+  if (result.deletedCount === 1) {
+    await Promise.all([
+      ContentEntryModel.deleteMany({
+        tenantId: new Types.ObjectId(input.tenantId),
+      }),
+      ContentTypeModel.deleteMany({
+        tenantId: new Types.ObjectId(input.tenantId),
+      }),
+    ])
+  }
 
   return result.deletedCount === 1
 }

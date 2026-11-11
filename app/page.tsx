@@ -1,6 +1,6 @@
 import Link from "next/link"
 import {
-  File02Icon,
+  Database01Icon,
   Image02Icon,
   Settings01Icon,
 } from "@hugeicons/core-free-icons"
@@ -57,15 +57,18 @@ export default async function Page() {
         </div>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
-            <div className="mb-8 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-              <HugeiconsIcon icon={File02Icon} strokeWidth={2} />
+          <Link
+            href="/content-types"
+            className="group rounded-2xl border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+          >
+            <div className="mb-8 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+              <HugeiconsIcon icon={Database01Icon} strokeWidth={2} />
             </div>
-            <h2 className="font-medium">Pages</h2>
+            <h2 className="font-medium">Content types</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create and organize content
+              Define schemas and relations
             </p>
-          </div>
+          </Link>
 
           <div className="rounded-2xl border bg-card p-6 shadow-sm">
             <div className="mb-8 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">

@@ -2,6 +2,21 @@
 
 A protected Next.js CMS workspace using shadcn/ui and MongoDB through Mongoose.
 
+## Content model
+
+YACMS is schema-driven. Tenants create their own content types from reusable
+field definitions, including relations to other content types. Content is
+stored as generic entries rather than domain-specific database models.
+
+Published entries are available through the generic read API:
+
+```text
+GET /api/content/:tenantId/:contentTypeApiId
+```
+
+Connected sites own the adapter that maps a generic response to their local
+view models. Domain concepts stay out of the CMS core.
+
 ## Authentication
 
 Accounts and sessions are stored in MongoDB using typed Mongoose models.
