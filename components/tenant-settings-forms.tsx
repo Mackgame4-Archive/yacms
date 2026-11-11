@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { SmtpSettingsForm } from "@/components/smtp-settings-form"
+import { SchemaImportForm } from "@/components/schema-import-form"
 import type { SafeSmtpSettings } from "@/lib/smtp-settings"
 
 const initialState: TenantSettingsState = {}
@@ -51,6 +52,7 @@ export function TenantSettingsForms({
       <NameForm name={name} slug={slug} />
       <ApiTokenForm slug={slug} apiTokenInfo={apiTokenInfo} />
       <SmtpSettingsForm settings={smtpSettings} websiteName={name} />
+      <SchemaImportForm />
       <DeleteForm slug={slug} />
     </div>
   )

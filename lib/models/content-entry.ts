@@ -12,6 +12,7 @@ import {
 export type ContentEntryRecord = {
   tenantId: Types.ObjectId
   contentTypeId: Types.ObjectId
+  importKey?: string
   values: Map<string, unknown>
   status: "draft" | "published"
   createdAt: Date
@@ -34,6 +35,12 @@ const contentEntrySchema = new Schema<ContentEntryRecord>(
       required: true,
       index: true,
     },
+    importKey: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      select: false,
+    },
     values: {
       type: Map,
       of: Schema.Types.Mixed,
@@ -51,7 +58,35 @@ const contentEntrySchema = new Schema<ContentEntryRecord>(
 )
 
 contentEntrySchema.index({ tenantId: 1, contentTypeId: 1, updatedAt: -1 })
+contentEntrySchema.index(
+  { tenantId: 1, contentTypeId: 1, importKey: 1 },
+  {
+    unique: true,
+    name: "content_entry_import_key_unique",
+    partialFilterExpression: { importKey: { $type: "string" } },
+  }
+)
 
 export const ContentEntryModel =
   (models.ContentEntry as Model<ContentEntryRecord> | undefined) ??
   model<ContentEntryRecord>("ContentEntry", contentEntrySchema)
+
+// Keep the cached development model in sync after adding import support.
+if (!ContentEntryModel.schema.path("importKey")) {
+  ContentEntryModel.schema.add({
+    importKey: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      select: false,
+    },
+  })
+  ContentEntryModel.schema.index(
+    { tenantId: 1, contentTypeId: 1, importKey: 1 },
+    {
+      unique: true,
+      name: "content_entry_import_key_unique",
+      partialFilterExpression: { importKey: { $type: "string" } },
+    }
+  )
+}
