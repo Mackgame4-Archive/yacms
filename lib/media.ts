@@ -79,7 +79,7 @@ export async function removeConnection(tenantId: string, connectionId: string) {
 export async function listMedia(tenantId: string) {
   await dbConnect()
   const records = await MediaAssetModel.find({ tenantId: new Types.ObjectId(tenantId) }).sort({ createdAt: -1 }).exec()
-  return records.map((record) => ({ id: record.id as string, filename: record.filename, contentType: record.contentType, size: record.size, connectionId: record.connectionId.toString() }))
+  return records.map((record) => ({ id: record.id as string, filename: record.filename, contentType: record.contentType, size: record.size, connectionId: record.connectionId.toString(), key: record.key, createdAt: record.createdAt.toISOString() }))
 }
 
 export async function uploadMedia(tenantId: string, connectionId: string, file: File) {

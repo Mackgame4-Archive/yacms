@@ -4,11 +4,12 @@ import { ArrowLeft01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { AppHeader } from "@/components/app-header"
 import { FileExplorer, type ExplorerFolder } from "@/components/file-explorer"
+import { UploadHistory } from "@/components/upload-history"
 import { buttonVariants } from "@/components/ui/button"
 import { requireUser } from "@/lib/auth"
 import { listBucket, validPrefix } from "@/lib/bucket-explorer"
 import { getTenantContext } from "@/lib/tenant-context"
-import { listConnections } from "@/lib/media"
+import { listConnections, listMedia } from "@/lib/media"
 
 export default async function ConnectionPage({ params, searchParams }: PageProps<"/media/[connectionId]">) {
   const user = await requireUser()
@@ -19,7 +20,8 @@ export default async function ConnectionPage({ params, searchParams }: PageProps
   const prefix = typeof query.prefix === "string" ? query.prefix : ""
   const cursor = typeof query.cursor === "string" ? query.cursor : undefined
   if (!validPrefix(prefix)) notFound()
-  const connection = (await listConnections(currentTenant.id)).find((item) => item.id === connectionId)
+  const [connections, uploadedFiles] = await Promise.all([listConnections(currentTenant.id), listMedia(currentTenant.id)])
+  const connection = connections.find((item) => item.id === connectionId)
   if (!connection) notFound()
 
   let listing: Awaited<ReturnType<typeof listBucket>> | null = null
@@ -34,7 +36,7 @@ export default async function ConnectionPage({ params, searchParams }: PageProps
   } catch (error) { console.error("Bucket listing failed", error) }
 
   return <main className="flex h-svh min-h-0 w-full flex-col overflow-hidden bg-muted/30"><div className="shrink-0"><AppHeader user={user} /></div><section className="flex min-h-0 w-full flex-1 flex-col gap-3 px-3 py-3 sm:px-4">
-    <div className="shrink-0"><div className="flex min-w-0 items-center gap-1"><Link href="/media" aria-label="Back to media" title="Back to media" className={buttonVariants({ variant: "ghost", size: "icon", className: "-ml-2" })}><HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} /></Link><h1 className="min-w-0 truncate text-xl font-semibold tracking-tight">{connection.name}</h1></div><p className="truncate text-xs text-muted-foreground">{connection.bucket} · {connection.region}{connection.endpoint ? ` · ${connection.endpoint}` : ""}</p></div>
+    <div className="flex shrink-0 items-center justify-between gap-3"><div className="min-w-0"><div className="flex min-w-0 items-center gap-1"><Link href="/media" aria-label="Back to media" title="Back to media" className={buttonVariants({ variant: "ghost", size: "icon", className: "-ml-2" })}><HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} /></Link><h1 className="min-w-0 truncate text-xl font-semibold tracking-tight">{connection.name}</h1></div><p className="truncate text-xs text-muted-foreground">{connection.bucket} · {connection.region}{connection.endpoint ? ` · ${connection.endpoint}` : ""}</p></div><UploadHistory files={uploadedFiles} connections={connections} /></div>
     {listing ? <FileExplorer connectionId={connectionId} prefix={prefix} listing={listing} tree={tree} /> : <p className="rounded-xl border border-destructive/30 bg-card p-6 text-sm text-destructive">Unable to list this bucket. Check that the connection has permission to list objects.</p>}
   </section></main>
 }
