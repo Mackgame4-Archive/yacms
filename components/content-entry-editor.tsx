@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useMemo, useState } from "react"
 import { Delete02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/content-entries"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Combobox, ComboboxChip, ComboboxChips, ComboboxChipsInput, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxValue } from "@/components/ui/combobox"
 import {
   Field,
   FieldDescription,
@@ -28,6 +29,7 @@ import type {
 } from "@/lib/content-schema"
 
 const initialState: ContentEntryFormState = {}
+const localFileChoice = "__local_file__"
 
 export type RelationOptions = Record<
   string,
@@ -169,7 +171,11 @@ function EntryField({
     )
   }
 
-  if (field.type === "relation" || field.type === "media") {
+  if (field.type === "media") {
+    return <MediaEntryField field={field} value={value} options={options} id={id} />
+  }
+
+  if (field.type === "relation") {
     return (
       <Field>
         <FieldLabel htmlFor={id}>{field.name}</FieldLabel>
@@ -179,25 +185,24 @@ function EntryField({
           defaultValue={field.multiple ? values : value == null ? null : String(value)}
           multiple={field.multiple}
           required={field.required}
-          items={field.multiple || field.required ? options : [{ value: null, label: field.type === "media" ? "No media" : "No relation" }, ...options]}
+          items={field.multiple || field.required ? options : [{ value: null, label: "No relation" }, ...options]}
         >
           <SelectTrigger className="w-full">
             {field.multiple ? (
               <SelectValue>
                 {(selected: string[]) => selected.length
                   ? selected.map((item) => options.find((option) => option.value === item)?.label ?? item).join(", ")
-                  : field.type === "media" ? "No media" : "No relations"}
+                  : "No relations"}
               </SelectValue>
-            ) : <SelectValue placeholder={field.type === "media" ? "Choose media" : "No relation"} />}
+            ) : <SelectValue placeholder="No relation" />}
           </SelectTrigger>
           <SelectContent>
-            {!field.multiple && !field.required && <SelectItem value={null}>{field.type === "media" ? "No media" : "No relation"}</SelectItem>}
+            {!field.multiple && !field.required && <SelectItem value={null}>No relation</SelectItem>}
             {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {field.type === "media" && options.length === 0 && <FieldDescription>Connect S3 and upload a file in Media first.</FieldDescription>}
       </Field>
     )
   }
@@ -233,6 +238,29 @@ function EntryField({
       />
     </Field>
   )
+}
+
+function MediaEntryField({ field, value, options, id }: { field: SafeFieldDefinition; value: unknown; options: Array<{ value: string; label: string }>; id: string }) {
+  const initialValues = Array.isArray(value) ? value.map(String) : value == null ? [] : [String(value)]
+  const initialPaths = initialValues.filter((item) => item.startsWith("/"))
+  const choices = useMemo(() => [{ value: localFileChoice, label: "LOCAL FILE" }, ...options], [options])
+  const [selection, setSelection] = useState<string[]>([...initialValues.filter((item) => !item.startsWith("/")), ...(initialPaths.length ? [localFileChoice] : [])])
+  const [localPaths, setLocalPaths] = useState(initialPaths.join("\n"))
+  const selectedChoices = selection.flatMap((item) => choices.filter((choice) => choice.value === item))
+  const hasLocalFile = selection.includes(localFileChoice)
+
+  return <Field>
+    <FieldLabel htmlFor={id}>{field.name}</FieldLabel>
+    {field.multiple ? <Combobox items={choices} multiple value={selectedChoices} onValueChange={(next) => setSelection(next.map((item) => item.value))}>
+      <ComboboxChips className="w-full"><ComboboxValue>{(selectedItems: typeof choices) => selectedItems.map((item) => <ComboboxChip key={item.value}>{item.label}</ComboboxChip>)}</ComboboxValue><ComboboxChipsInput id={id} placeholder="Search media or choose LOCAL FILE" /></ComboboxChips>
+      <ComboboxContent><ComboboxEmpty>No matching media.</ComboboxEmpty><ComboboxList>{(item: (typeof choices)[number]) => <ComboboxItem key={item.value} value={item}>{item.label}</ComboboxItem>}</ComboboxList></ComboboxContent>
+    </Combobox> : <Combobox items={choices} value={selectedChoices[0] ?? null} onValueChange={(next) => setSelection(next ? [next.value] : [])}>
+      <ComboboxInput id={id} className="w-full" placeholder="Search media or choose LOCAL FILE" showClear={!field.required} />
+      <ComboboxContent><ComboboxEmpty>No matching media.</ComboboxEmpty><ComboboxList>{(item: (typeof choices)[number]) => <ComboboxItem key={item.value} value={item}>{item.label}</ComboboxItem>}</ComboboxList></ComboboxContent>
+    </Combobox>}
+    {selection.filter((item) => item !== localFileChoice).map((item) => <input key={item} type="hidden" name={field.apiId} value={item} />)}
+    {hasLocalFile && (field.multiple ? <><Textarea value={localPaths} onChange={(event) => setLocalPaths(event.target.value)} name={field.apiId} aria-label={`${field.name} local file paths`} placeholder="/assets/clipping-logo.png" rows={3} required={field.required && selection.length === 1} /><FieldDescription>Enter one website path per line, starting with /.</FieldDescription></> : <><Input value={localPaths} onChange={(event) => setLocalPaths(event.target.value)} name={field.apiId} aria-label={`${field.name} local file path`} placeholder="/assets/clipping-logo.png" required={field.required} /><FieldDescription>Enter a path served by your website, starting with /.</FieldDescription></>)}
+  </Field>
 }
 
 function inputType(field: SafeFieldDefinition) {

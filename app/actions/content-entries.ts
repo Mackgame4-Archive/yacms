@@ -14,6 +14,7 @@ import { dbConnect } from "@/lib/mongodb"
 import { ContentEntryModel } from "@/lib/models/content-entry"
 import { getTenantContext } from "@/lib/tenant-context"
 import { mediaIdsExist } from "@/lib/media"
+import { isLocalMediaPath } from "@/lib/media-path"
 
 export type ContentEntryFormState = {
   status?: "error" | "success"
@@ -115,7 +116,9 @@ async function parseValues(
         }
         converted.push(number)
       } else if (field.type === "media") {
-        if (!(await mediaIdsExist(tenantId, [value]))) return { error: `${field.name} must reference media from this website.` }
+        if (value.startsWith("/")) {
+          if (!isLocalMediaPath(value)) return { error: `${field.name} must be a valid website path.` }
+        } else if (!(await mediaIdsExist(tenantId, [value]))) return { error: `${field.name} must reference media from this website.` }
         converted.push(value)
       } else if (field.type === "url") {
         if (!isUrlOrPath(value)) {

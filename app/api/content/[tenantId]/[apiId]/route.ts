@@ -3,6 +3,7 @@ import { Types } from "mongoose"
 import { listContentEntries } from "@/lib/content-entries"
 import { findContentTypeByApiId } from "@/lib/content-types"
 import { mediaIdsExist } from "@/lib/media"
+import { isLocalMediaPath } from "@/lib/media-path"
 
 export async function GET(
   request: Request,
@@ -59,6 +60,7 @@ export async function GET(
 }
 
 async function mediaReferenceUrl(tenantId: string, mediaId: string, requestUrl: string) {
+  if (mediaId.startsWith("/")) return isLocalMediaPath(mediaId) ? mediaId : null
   if (!(await mediaIdsExist(tenantId, [mediaId]))) return null
   return new URL(`/api/content/${tenantId}/media/${mediaId}`, requestUrl).toString()
 }
