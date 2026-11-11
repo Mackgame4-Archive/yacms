@@ -19,6 +19,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type {
   SafeContentEntry,
@@ -166,21 +167,30 @@ function EntryField({
     return (
       <Field>
         <FieldLabel htmlFor={id}>{field.name}</FieldLabel>
-        <select
+        <Select
           id={id}
           name={field.apiId}
-          defaultValue={field.multiple ? values : String(value ?? "")}
+          defaultValue={field.multiple ? values : value == null ? null : String(value)}
           multiple={field.multiple}
           required={field.required}
-          className="min-h-9 w-full rounded-2xl border border-transparent bg-input/50 px-3 py-2 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+          items={field.multiple || field.required ? options : [{ value: null, label: "No relation" }, ...options]}
         >
-          {!field.multiple && <option value="">No relation</option>}
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full">
+            {field.multiple ? (
+              <SelectValue>
+                {(selected: string[]) => selected.length
+                  ? selected.map((item) => options.find((option) => option.value === item)?.label ?? item).join(", ")
+                  : "No relations"}
+              </SelectValue>
+            ) : <SelectValue placeholder="No relation" />}
+          </SelectTrigger>
+          <SelectContent>
+            {!field.multiple && !field.required && <SelectItem value={null}>No relation</SelectItem>}
+            {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
     )
   }

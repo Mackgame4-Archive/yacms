@@ -18,6 +18,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import {
   fieldTypes,
@@ -205,38 +206,35 @@ export function AddContentTypeFieldForm({
         </div>
         <Field>
           <FieldLabel htmlFor="field-type">Field type</FieldLabel>
-          <select
+          <Select
             id="field-type"
             name="type"
             value={type}
-            onChange={(event) => setType(event.target.value as FieldType)}
-            className="h-9 w-full rounded-2xl border border-transparent bg-input/50 px-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+            onValueChange={(value) => setType(value as FieldType)}
+            items={fieldTypes.map((fieldType) => ({ value: fieldType, label: fieldTypeLabels[fieldType] }))}
           >
-            {fieldTypes.map((fieldType) => (
-              <option key={fieldType} value={fieldType}>
-                {fieldTypeLabels[fieldType]}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>{fieldTypes.map((fieldType) => (
+              <SelectItem key={fieldType} value={fieldType}>{fieldTypeLabels[fieldType]}</SelectItem>
+            ))}</SelectContent>
+          </Select>
         </Field>
         {type === "relation" && (
           <Field>
             <FieldLabel htmlFor="field-related-type">
               Related content type
             </FieldLabel>
-            <select
+            <Select
               id="field-related-type"
               name="relatedContentTypeId"
-              className="h-9 w-full rounded-2xl border border-transparent bg-input/50 px-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
               required
+              items={contentTypes.map((contentType) => ({ value: contentType.id, label: contentType.name }))}
             >
-              <option value="">Choose a type</option>
-              {contentTypes.map((contentType) => (
-                <option key={contentType.id} value={contentType.id}>
-                  {contentType.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Choose a type" /></SelectTrigger>
+              <SelectContent>{contentTypes.map((contentType) => (
+                <SelectItem key={contentType.id} value={contentType.id}>{contentType.name}</SelectItem>
+              ))}</SelectContent>
+            </Select>
             <FieldDescription>
               Entries can reference entries from the selected type.
             </FieldDescription>
