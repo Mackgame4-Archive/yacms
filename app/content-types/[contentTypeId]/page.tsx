@@ -3,17 +3,16 @@ import { notFound, redirect } from "next/navigation"
 import {
   ArrowLeft01Icon,
   ConnectIcon,
-  Delete02Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { deleteContentTypeFieldAction } from "@/app/actions/content-types"
 import { AppHeader } from "@/components/app-header"
+import { DeleteContentConfirmation } from "@/components/delete-content-confirmation"
 import {
   AddContentTypeFieldForm,
   ContentTypeDetailsForm,
 } from "@/components/content-type-forms"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { requireUser } from "@/lib/auth"
 import {
   findContentTypeForTenant,
@@ -119,23 +118,12 @@ export default async function ContentTypePage({
                       </p>
                     </div>
                   </div>
-                  <form action={deleteContentTypeFieldAction}>
-                    <input
-                      type="hidden"
-                      name="contentTypeId"
-                      value={contentType.id}
-                    />
-                    <input type="hidden" name="fieldId" value={field.id} />
-                    <Button
-                      type="submit"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Delete ${field.name}`}
-                      title={`Delete ${field.name}`}
-                    >
-                      <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-                    </Button>
-                  </form>
+                  <DeleteContentConfirmation
+                    kind="field"
+                    contentTypeId={contentType.id}
+                    itemId={field.id}
+                    itemName={field.name}
+                  />
                 </div>
               ))}
             </div>

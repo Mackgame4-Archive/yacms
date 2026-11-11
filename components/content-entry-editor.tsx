@@ -1,15 +1,15 @@
 "use client"
 
-import { useActionState, useMemo, useState } from "react"
-import { Delete02Icon } from "@hugeicons/core-free-icons"
+import { useActionState, useId, useMemo, useState } from "react"
+import { EyeIcon, EyeOffIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import {
-  deleteContentEntryAction,
   saveContentEntryAction,
   type ContentEntryFormState,
 } from "@/app/actions/content-entries"
 import { Button } from "@/components/ui/button"
+import { DeleteContentConfirmation } from "@/components/delete-content-confirmation"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox, ComboboxChip, ComboboxChips, ComboboxChipsInput, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxValue } from "@/components/ui/combobox"
 import {
@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Toggle } from "@/components/ui/toggle"
 import type {
   SafeContentEntry,
   SafeContentType,
@@ -93,6 +94,8 @@ function EntryForm({
     saveContentEntryAction,
     initialState
   )
+  const [published, setPublished] = useState(entry?.status === "published")
+  const saveFormId = useId()
   const label = entry ? entryLabel(contentType, entry) : `New ${contentType.name}`
 
   return (
@@ -103,9 +106,10 @@ function EntryForm({
         </p>
         <h2 className="mt-1 text-lg font-semibold">{label}</h2>
       </div>
-      <form action={action}>
+      <form id={saveFormId} action={action}>
         <input type="hidden" name="contentTypeId" value={contentType.id} />
         {entry && <input type="hidden" name="entryId" value={entry.id} />}
+        <input type="hidden" name="published" value={published ? "on" : ""} />
         <FieldGroup className="gap-5">
           {contentType.fields.map((field) => (
             <EntryField
@@ -116,31 +120,29 @@ function EntryForm({
               entryId={entry?.id ?? "new"}
             />
           ))}
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <Checkbox
-              name="published"
-              defaultChecked={entry?.status === "published"}
-            />
-            Published
-          </label>
           <FormMessage state={state} />
-          <div>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : entry ? "Save entry" : "Create entry"}
-            </Button>
-          </div>
         </FieldGroup>
       </form>
-      {entry && (
-        <form action={deleteContentEntryAction} className="mt-4 border-t pt-4">
-          <input type="hidden" name="contentTypeId" value={contentType.id} />
-          <input type="hidden" name="entryId" value={entry.id} />
-          <Button type="submit" variant="destructive" size="sm">
-            <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-            Delete entry
-          </Button>
-        </form>
-      )}
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Toggle type="button" variant="outline" size="sm" pressed={published} onPressedChange={setPublished} disabled={pending} aria-label={published ? "Published; click to set draft" : "Draft; click to publish"} className="aria-pressed:bg-primary/10 aria-pressed:text-primary">
+            <HugeiconsIcon icon={published ? EyeIcon : EyeOffIcon} strokeWidth={2} />
+            {published ? "Published" : "Draft"}
+          </Toggle>
+          {entry && (
+            <DeleteContentConfirmation
+              kind="entry"
+              contentTypeId={contentType.id}
+              itemId={entry.id}
+              itemName={label}
+              disabled={pending}
+            />
+          )}
+        </div>
+        <Button type="submit" form={saveFormId} disabled={pending}>
+          {pending ? "Saving…" : entry ? "Save entry" : "Create entry"}
+        </Button>
+      </div>
     </article>
   )
 }
