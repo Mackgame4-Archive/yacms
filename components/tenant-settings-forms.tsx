@@ -62,7 +62,7 @@ function ApiTokenForm({
     regenerateTenantApiTokenAction,
     {}
   )
-  const [copiedToken, setCopiedToken] = useState<string | null>(null)
+  const [copiedValue, setCopiedValue] = useState<string | null>(null)
   const origin = useSyncExternalStore(
     subscribeToOrigin,
     () => window.location.origin,
@@ -70,13 +70,12 @@ function ApiTokenForm({
   )
   const apiUrl = `${origin}/api/${slug}/content`
 
-  async function copyToken() {
-    if (!state.token) return
+  async function copyValue(value: string) {
     try {
-      await navigator.clipboard.writeText(state.token)
-      setCopiedToken(state.token)
+      await navigator.clipboard.writeText(value)
+      setCopiedValue(value)
     } catch {
-      setCopiedToken(null)
+      setCopiedValue(null)
     }
   }
 
@@ -129,24 +128,70 @@ function ApiTokenForm({
 
       {!apiTokenInfo && state.status === "error" && <FieldError className="mt-4">{state.message}</FieldError>}
       {state.token && (
-        <div className="mt-5 rounded-xl border border-primary/25 bg-primary/5 p-4">
-          <p role="status" className="mb-3 text-sm font-medium">{state.message}</p>
-          <div className="flex flex-wrap gap-2">
-            <Input aria-label="New API token" value={state.token} readOnly className="min-w-0 flex-1 font-mono" />
-            <Button type="button" variant="outline" onClick={copyToken}>
-              {copiedToken === state.token ? "Copied" : "Copy token"}
-            </Button>
-          </div>
-        </div>
+        <p
+          role="status"
+          className="mt-5 rounded-xl border border-primary/25 bg-primary/5 p-4 text-sm font-medium"
+        >
+          {state.message}
+        </p>
       )}
 
-      <div className="mt-6 space-y-2">
-        <p className="text-sm font-medium">Astro environment variables</p>
-        <pre className="overflow-x-auto rounded-xl bg-muted p-4 text-xs leading-6"><code>{`CMS_URL_API=${apiUrl}\nCMS_API_TOKEN=${state.token ?? "your-api-token"}`}</code></pre>
-        <p className="text-xs text-muted-foreground">
-          Keep the token in the website&apos;s server environment. Send it as an Authorization: Bearer header when fetching a content type.
-        </p>
-      </div>
+      <FieldGroup className="mt-6 gap-4">
+        <Field>
+          <FieldLabel htmlFor="tenant-api-url">API_URL</FieldLabel>
+          <div className="flex gap-2">
+            <Input
+              id="tenant-api-url"
+              value={apiUrl}
+              className="bg-muted/50 font-mono text-muted-foreground"
+              readOnly
+              aria-readonly="true"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => copyValue(apiUrl)}
+              aria-label="Copy API URL"
+            >
+              {copiedValue === apiUrl ? "Copied" : "Copy"}
+            </Button>
+          </div>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="tenant-api-token">API_TOKEN</FieldLabel>
+          <div className="flex gap-2">
+            <Input
+              id="tenant-api-token"
+              value={
+                state.token ??
+                (apiTokenInfo
+                  ? `Regenerate token ending in ${apiTokenInfo.last4} to reveal it`
+                  : "Create a token to reveal it")
+              }
+              className="bg-muted/50 font-mono text-muted-foreground"
+              readOnly
+              aria-readonly="true"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => state.token && copyValue(state.token)}
+              disabled={!state.token}
+              aria-label="Copy API token"
+            >
+              {state.token && copiedValue === state.token
+                ? "Copied"
+                : "Copy"}
+            </Button>
+          </div>
+        </Field>
+      </FieldGroup>
+
+      <p className="mt-3 text-xs text-muted-foreground">
+        Keep the token in the website&apos;s server environment. Send it as an
+        Authorization: Bearer header when fetching a content type.
+      </p>
     </section>
   )
 }
