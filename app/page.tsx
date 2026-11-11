@@ -1,8 +1,34 @@
 import { AppHeader } from "@/components/app-header"
+import { WebsiteForm } from "@/components/website-form"
 import { requireUser } from "@/lib/auth"
+import { getTenantContext } from "@/lib/tenant-context"
 
 export default async function Page() {
   const user = await requireUser()
+  const { currentTenant } = await getTenantContext(user.id)
+
+  if (!currentTenant) {
+    return (
+      <main className="min-h-svh bg-muted/30">
+        <AppHeader user={user} />
+        <section className="mx-auto max-w-2xl px-6 py-12 sm:py-20">
+          <div className="mb-8">
+            <p className="text-sm font-medium text-muted-foreground">
+              Welcome to YACMS
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+              Create your first website
+            </h1>
+            <p className="mt-3 max-w-xl leading-7 text-muted-foreground">
+              Add a website to start creating pages, organizing media, and
+              managing your content.
+            </p>
+          </div>
+          <WebsiteForm />
+        </section>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-svh bg-[radial-gradient(circle_at_top_left,var(--color-muted),transparent_35%)]">
