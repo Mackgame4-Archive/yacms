@@ -39,24 +39,22 @@ export default async function Page() {
   }
 
   return (
-    <main className="min-h-svh bg-[radial-gradient(circle_at_top_left,var(--color-muted),transparent_35%)]">
+    <main className="min-h-svh bg-muted/30">
       <AppHeader user={user} />
 
-      <section className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
-        <div className="max-w-2xl">
+      <section className="mx-auto max-w-6xl px-6 py-10 sm:py-14">
+        <div className="mb-8">
           <p className="mb-4 text-sm font-medium text-muted-foreground">
-            Private workspace
-          </p>
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
             Welcome back, {user.name.split(" ")[0]}.
-          </h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
-            This page is protected. Only people with a valid database session
-            can view its content.
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">Overview</h1>
+          <p className="mt-3 max-w-2xl text-muted-foreground">
+            Manage {currentTenant.name}&apos;s content structure, media library,
+            and API access.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-3">
+        <nav aria-label="Website management" className="grid gap-4 sm:grid-cols-3">
           <Link
             href="/content-types"
             className="group rounded-2xl border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
@@ -66,7 +64,7 @@ export default async function Page() {
             </div>
             <h2 className="font-medium">Content types</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Define schemas and relations
+              Manage schemas and fields
             </p>
           </Link>
 
@@ -76,7 +74,7 @@ export default async function Page() {
             </div>
             <h2 className="font-medium">Media</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Keep assets in one place
+              Browse and upload files
             </p>
           </Link>
 
@@ -89,10 +87,10 @@ export default async function Page() {
             </div>
             <h2 className="font-medium">Settings</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Manage this website
+              Website details and API access
             </p>
           </Link>
-        </div>
+        </nav>
       </section>
     </main>
   )
