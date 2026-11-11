@@ -1,6 +1,7 @@
 import Link from "next/link"
 import {
   Database01Icon,
+  FormIcon,
   Image02Icon,
   Settings01Icon,
 } from "@hugeicons/core-free-icons"
@@ -54,7 +55,10 @@ export default async function Page() {
           </p>
         </div>
 
-        <nav aria-label="Website management" className="grid gap-4 sm:grid-cols-3">
+        <nav
+          aria-label="Website management"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
           <Link
             href="/content-types"
             className="group rounded-2xl border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
@@ -75,6 +79,19 @@ export default async function Page() {
             <h2 className="font-medium">Media</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Browse and upload files
+            </p>
+          </Link>
+
+          <Link
+            href="/forms"
+            className="group rounded-2xl border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+          >
+            <div className="mb-8 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+              <HugeiconsIcon icon={FormIcon} strokeWidth={2} />
+            </div>
+            <h2 className="font-medium">Forms</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Define submission schemas
             </p>
           </Link>
 

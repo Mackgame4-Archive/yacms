@@ -6,6 +6,9 @@ import { dbConnect } from "@/lib/mongodb"
 import { removeTenantMedia } from "@/lib/media"
 import { ContentEntryModel } from "@/lib/models/content-entry"
 import { ContentTypeModel } from "@/lib/models/content-type"
+import { FormSchemaModel } from "@/lib/models/form-schema"
+import { FormSubmissionModel } from "@/lib/models/form-submission"
+import { SmtpSettingsModel } from "@/lib/models/smtp-settings"
 import { TenantModel, type TenantDocument } from "@/lib/models/tenant"
 
 export type SafeTenant = {
@@ -123,6 +126,15 @@ export async function deleteTenant(input: {
         tenantId: new Types.ObjectId(input.tenantId),
       }),
       ContentTypeModel.deleteMany({
+        tenantId: new Types.ObjectId(input.tenantId),
+      }),
+      FormSchemaModel.deleteMany({
+        tenantId: new Types.ObjectId(input.tenantId),
+      }),
+      FormSubmissionModel.deleteMany({
+        tenantId: new Types.ObjectId(input.tenantId),
+      }),
+      SmtpSettingsModel.deleteMany({
         tenantId: new Types.ObjectId(input.tenantId),
       }),
     ])

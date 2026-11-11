@@ -29,6 +29,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { SmtpSettingsForm } from "@/components/smtp-settings-form"
+import type { SafeSmtpSettings } from "@/lib/smtp-settings"
 
 const initialState: TenantSettingsState = {}
 const subscribeToOrigin = () => () => {}
@@ -37,15 +39,18 @@ export function TenantSettingsForms({
   name,
   slug,
   apiTokenInfo,
+  smtpSettings,
 }: {
   name: string
   slug: string
   apiTokenInfo: { last4: string; createdAt: string } | null
+  smtpSettings: SafeSmtpSettings | null
 }) {
   return (
     <div className="grid gap-6">
       <NameForm name={name} slug={slug} />
       <ApiTokenForm slug={slug} apiTokenInfo={apiTokenInfo} />
+      <SmtpSettingsForm settings={smtpSettings} websiteName={name} />
       <DeleteForm slug={slug} />
     </div>
   )
@@ -68,7 +73,7 @@ function ApiTokenForm({
     () => window.location.origin,
     () => "https://your-cms-host"
   )
-  const apiUrl = `${origin}/api/${slug}/content`
+  const apiUrl = `${origin}/api/${slug}/`
 
   async function copyValue(value: string) {
     try {

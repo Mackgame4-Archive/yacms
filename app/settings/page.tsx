@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { requireUser } from "@/lib/auth"
 import { getTenantContext } from "@/lib/tenant-context"
 import { getTenantApiTokenInfo } from "@/lib/tenant-api-token"
+import { getSmtpSettings } from "@/lib/smtp-settings"
 
 export const metadata = {
   title: "Website settings · YACMS",
@@ -19,7 +20,10 @@ export default async function SettingsPage() {
   const { currentTenant } = await getTenantContext(user.id)
 
   if (!currentTenant) redirect("/")
-  const apiTokenInfo = await getTenantApiTokenInfo(currentTenant.id, user.id)
+  const [apiTokenInfo, smtpSettings] = await Promise.all([
+    getTenantApiTokenInfo(currentTenant.id, user.id),
+    getSmtpSettings(currentTenant.id),
+  ])
 
   return (
     <main className="min-h-svh bg-muted/30">
@@ -47,13 +51,14 @@ export default async function SettingsPage() {
             Website settings
           </h1>
           <p className="mt-3 text-muted-foreground">
-            Manage this website&apos;s identity, API access, and lifecycle.
+            Manage this website&apos;s identity, API access, email, and lifecycle.
           </p>
         </div>
         <TenantSettingsForms
           name={currentTenant.name}
           slug={currentTenant.slug}
           apiTokenInfo={apiTokenInfo}
+          smtpSettings={smtpSettings}
         />
       </section>
     </main>
