@@ -50,6 +50,14 @@ export async function selectTenantAction(formData: FormData) {
   revalidatePath("/websites/new")
 }
 
+export async function unselectTenantAction() {
+  await requireUser()
+  await setCurrentTenant(null)
+  revalidatePath("/")
+  revalidatePath("/profile")
+  revalidatePath("/websites/new")
+}
+
 export async function createTenantAction(
   _state: TenantFormState,
   formData: FormData

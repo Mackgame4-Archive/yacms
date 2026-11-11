@@ -6,6 +6,7 @@ import { cookies } from "next/headers"
 import { listTenantsForUser } from "@/lib/tenants"
 
 const tenantCookieName = "yacms_tenant_v1"
+const noTenantSelected = "none"
 
 function shouldUseSecureCookies() {
   if (process.env.COOKIE_SECURE === "false") return false
@@ -20,14 +21,16 @@ export const getTenantContext = cache(async (userId: string) => {
   ])
   const selectedId = cookieStore.get(tenantCookieName)?.value
   const currentTenant =
-    tenants.find((tenant) => tenant.id === selectedId) ?? tenants[0] ?? null
+    selectedId === noTenantSelected
+      ? null
+      : tenants.find((tenant) => tenant.id === selectedId) ?? tenants[0] ?? null
 
   return { tenants, currentTenant }
 })
 
-export async function setCurrentTenant(tenantId: string) {
+export async function setCurrentTenant(tenantId: string | null) {
   const cookieStore = await cookies()
-  cookieStore.set(tenantCookieName, tenantId, {
+  cookieStore.set(tenantCookieName, tenantId ?? noTenantSelected, {
     httpOnly: true,
     secure: shouldUseSecureCookies(),
     sameSite: "lax",

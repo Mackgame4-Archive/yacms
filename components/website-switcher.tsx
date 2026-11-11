@@ -9,7 +9,10 @@ import {
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { selectTenantAction } from "@/app/actions/tenants"
+import {
+  selectTenantAction,
+  unselectTenantAction,
+} from "@/app/actions/tenants"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -63,29 +66,36 @@ export function WebsiteSwitcher({
         <DropdownMenuGroup>
           <DropdownMenuLabel>Your websites</DropdownMenuLabel>
           {websites.length ? (
-            websites.map((website) => (
-              <form action={selectTenantAction} key={website.id}>
-                <input type="hidden" name="tenantId" value={website.id} />
-                <DropdownMenuItem
-                  nativeButton
-                  render={<button type="submit" className="w-full" />}
+            websites.map((website) => {
+              const isSelected = website.id === currentWebsiteId
+
+              return (
+                <form
+                  action={isSelected ? unselectTenantAction : selectTenantAction}
+                  key={website.id}
                 >
-                  <span className="min-w-0 flex-1 text-start">
-                    <span className="block truncate">{website.name}</span>
-                    <span className="block truncate text-xs font-normal text-muted-foreground">
-                      {website.slug}
+                  <input type="hidden" name="tenantId" value={website.id} />
+                  <DropdownMenuItem
+                    nativeButton
+                    render={<button type="submit" className="w-full" />}
+                  >
+                    <span className="min-w-0 flex-1 text-start">
+                      <span className="block truncate">{website.name}</span>
+                      <span className="block truncate text-xs font-normal text-muted-foreground">
+                        {website.slug}
+                      </span>
                     </span>
-                  </span>
-                  {website.id === currentWebsiteId && (
-                    <HugeiconsIcon
-                      icon={Tick02Icon}
-                      strokeWidth={2}
-                      className="text-primary"
-                    />
-                  )}
-                </DropdownMenuItem>
-              </form>
-            ))
+                    {isSelected && (
+                      <HugeiconsIcon
+                        icon={Tick02Icon}
+                        strokeWidth={2}
+                        className="text-primary"
+                      />
+                    )}
+                  </DropdownMenuItem>
+                </form>
+              )
+            })
           ) : (
             <DropdownMenuItem disabled>No websites yet</DropdownMenuItem>
           )}
