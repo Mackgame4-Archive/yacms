@@ -38,10 +38,12 @@ export function ContentEntryEditor({
   contentType,
   entries,
   relationOptions,
+  mediaOptions,
 }: {
   contentType: SafeContentType
   entries: SafeContentEntry[]
   relationOptions: RelationOptions
+  mediaOptions: Array<{ value: string; label: string }>
 }) {
   if (contentType.fields.length === 0) {
     return (
@@ -59,6 +61,7 @@ export function ContentEntryEditor({
       <EntryForm
         contentType={contentType}
         relationOptions={relationOptions}
+        mediaOptions={mediaOptions}
       />
       {entries.map((entry) => (
         <EntryForm
@@ -66,6 +69,7 @@ export function ContentEntryEditor({
           contentType={contentType}
           entry={entry}
           relationOptions={relationOptions}
+          mediaOptions={mediaOptions}
         />
       ))}
     </div>
@@ -76,10 +80,12 @@ function EntryForm({
   contentType,
   entry,
   relationOptions,
+  mediaOptions,
 }: {
   contentType: SafeContentType
   entry?: SafeContentEntry
   relationOptions: RelationOptions
+  mediaOptions: Array<{ value: string; label: string }>
 }) {
   const [state, action, pending] = useActionState(
     saveContentEntryAction,
@@ -104,7 +110,7 @@ function EntryForm({
               key={field.id}
               field={field}
               value={entry?.values[field.apiId]}
-              options={relationOptions[field.apiId] ?? []}
+              options={field.type === "media" ? mediaOptions : relationOptions[field.apiId] ?? []}
               entryId={entry?.id ?? "new"}
             />
           ))}
@@ -163,7 +169,7 @@ function EntryField({
     )
   }
 
-  if (field.type === "relation") {
+  if (field.type === "relation" || field.type === "media") {
     return (
       <Field>
         <FieldLabel htmlFor={id}>{field.name}</FieldLabel>
@@ -173,24 +179,25 @@ function EntryField({
           defaultValue={field.multiple ? values : value == null ? null : String(value)}
           multiple={field.multiple}
           required={field.required}
-          items={field.multiple || field.required ? options : [{ value: null, label: "No relation" }, ...options]}
+          items={field.multiple || field.required ? options : [{ value: null, label: field.type === "media" ? "No media" : "No relation" }, ...options]}
         >
           <SelectTrigger className="w-full">
             {field.multiple ? (
               <SelectValue>
                 {(selected: string[]) => selected.length
                   ? selected.map((item) => options.find((option) => option.value === item)?.label ?? item).join(", ")
-                  : "No relations"}
+                  : field.type === "media" ? "No media" : "No relations"}
               </SelectValue>
-            ) : <SelectValue placeholder="No relation" />}
+            ) : <SelectValue placeholder={field.type === "media" ? "Choose media" : "No relation"} />}
           </SelectTrigger>
           <SelectContent>
-            {!field.multiple && !field.required && <SelectItem value={null}>No relation</SelectItem>}
+            {!field.multiple && !field.required && <SelectItem value={null}>{field.type === "media" ? "No media" : "No relation"}</SelectItem>}
             {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {field.type === "media" && options.length === 0 && <FieldDescription>Connect S3 and upload a file in Media first.</FieldDescription>}
       </Field>
     )
   }
@@ -223,9 +230,6 @@ function EntryField({
         defaultValue={value == null ? "" : String(value)}
         required={field.required}
         step={field.type === "number" ? "any" : undefined}
-        placeholder={
-          field.type === "media" ? "/assets/image.jpg or https://…" : undefined
-        }
       />
     </Field>
   )

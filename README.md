@@ -17,6 +17,25 @@ GET /api/content/:tenantId/:contentTypeApiId
 Connected sites own the adapter that maps a generic response to their local
 view models. Domain concepts stay out of the CMS core.
 
+## Media storage
+
+Set `MEDIA_ENCRYPTION_KEY` to a stable base64 encoded 32 byte random key before
+adding an S3 connection. For example, run `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"`
+and place the result in `.env.local` (or the Compose `.env`). Keep this key
+backed up: changing it makes stored S3 credentials unreadable.
+
+Each website configures its own bucket, region, credentials, and optional HTTPS
+S3 compatible endpoint on the Media page. Credentials are encrypted in MongoDB.
+Files are stored in the configured bucket; the app stores only metadata and
+media IDs. Without a connection, media uploads and media field selections are
+unavailable. A media field stores the tenant media ID, and the public content
+API resolves it to a stable delivery URL. The delivery endpoint redirects to a
+short lived signed S3 URL. Deleting a file used by an entry is blocked.
+
+Existing content with path based media values must be uploaded to S3 and
+reselected in the content editor. The public API returns `null` for those
+legacy values until they are migrated.
+
 ## Authentication
 
 Accounts and sessions are stored in MongoDB using typed Mongoose models.

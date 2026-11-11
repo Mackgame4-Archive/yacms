@@ -2,9 +2,10 @@ import { Types } from "mongoose"
 
 import { listContentEntries } from "@/lib/content-entries"
 import { findContentTypeByApiId } from "@/lib/content-types"
+import { mediaIdsExist } from "@/lib/media"
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: RouteContext<"/api/content/[tenantId]/[apiId]">
 ) {
   const { tenantId, apiId } = await context.params
@@ -23,6 +24,17 @@ export async function GET(
     publishedOnly: true,
   })
 
+  const data = await Promise.all(entries.map(async (entry) => {
+    const values = { ...entry.values }
+    for (const field of contentType.fields.filter((item) => item.type === "media")) {
+      const selected = values[field.apiId]
+      values[field.apiId] = Array.isArray(selected)
+        ? await Promise.all(selected.map((id) => mediaReferenceUrl(tenantId, String(id), request.url)))
+        : typeof selected === "string" ? await mediaReferenceUrl(tenantId, selected, request.url) : null
+    }
+    return { id: entry.id, ...values, createdAt: entry.createdAt.toISOString(), updatedAt: entry.updatedAt.toISOString() }
+  }))
+
   return Response.json(
     {
       type: {
@@ -36,17 +48,17 @@ export async function GET(
           relatedContentTypeId: field.relatedContentTypeId,
         })),
       },
-      data: entries.map((entry) => ({
-        id: entry.id,
-        ...entry.values,
-        createdAt: entry.createdAt.toISOString(),
-        updatedAt: entry.updatedAt.toISOString(),
-      })),
+      data,
     },
     {
       headers: {
-        "Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+        "Cache-Control": "no-store",
       },
     }
   )
+}
+
+async function mediaReferenceUrl(tenantId: string, mediaId: string, requestUrl: string) {
+  if (!(await mediaIdsExist(tenantId, [mediaId]))) return null
+  return new URL(`/api/content/${tenantId}/media/${mediaId}`, requestUrl).toString()
 }

@@ -13,6 +13,7 @@ import { findContentTypeForTenant } from "@/lib/content-types"
 import { dbConnect } from "@/lib/mongodb"
 import { ContentEntryModel } from "@/lib/models/content-entry"
 import { getTenantContext } from "@/lib/tenant-context"
+import { mediaIdsExist } from "@/lib/media"
 
 export type ContentEntryFormState = {
   status?: "error" | "success"
@@ -113,7 +114,10 @@ async function parseValues(
           return { error: `${field.name} must be a number.` }
         }
         converted.push(number)
-      } else if (field.type === "url" || field.type === "media") {
+      } else if (field.type === "media") {
+        if (!(await mediaIdsExist(tenantId, [value]))) return { error: `${field.name} must reference media from this website.` }
+        converted.push(value)
+      } else if (field.type === "url") {
         if (!isUrlOrPath(value)) {
           return { error: `${field.name} must be a URL or absolute path.` }
         }

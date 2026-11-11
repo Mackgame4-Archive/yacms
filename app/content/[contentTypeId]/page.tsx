@@ -17,6 +17,7 @@ import {
   listContentTypesForTenant,
 } from "@/lib/content-types"
 import { getTenantContext } from "@/lib/tenant-context"
+import { listConnections, listMedia } from "@/lib/media"
 
 export default async function ContentPage({
   params,
@@ -33,6 +34,7 @@ export default async function ContentPage({
   ])
   if (!contentType) notFound()
 
+  const [mediaConnections, mediaOptions] = await Promise.all([listConnections(currentTenant.id), listMedia(currentTenant.id)])
   const relationOptions = await buildRelationOptions(
     currentTenant.id,
     contentType,
@@ -72,6 +74,7 @@ export default async function ContentPage({
           contentType={contentType}
           entries={entries}
           relationOptions={relationOptions}
+          mediaOptions={mediaConnections.length ? mediaOptions.map((asset) => ({ value: asset.id, label: asset.filename })) : []}
         />
       </section>
     </main>

@@ -3,6 +3,7 @@ import "server-only"
 import { Types } from "mongoose"
 
 import { dbConnect } from "@/lib/mongodb"
+import { removeTenantMedia } from "@/lib/media"
 import { ContentEntryModel } from "@/lib/models/content-entry"
 import { ContentTypeModel } from "@/lib/models/content-type"
 import { TenantModel, type TenantDocument } from "@/lib/models/tenant"
@@ -108,6 +109,9 @@ export async function deleteTenant(input: {
   }
 
   await dbConnect()
+  const owned = await TenantModel.exists({ _id: new Types.ObjectId(input.tenantId), ownerId: new Types.ObjectId(input.ownerId) })
+  if (!owned) return false
+  await removeTenantMedia(input.tenantId)
   const result = await TenantModel.deleteOne({
     _id: new Types.ObjectId(input.tenantId),
     ownerId: new Types.ObjectId(input.ownerId),

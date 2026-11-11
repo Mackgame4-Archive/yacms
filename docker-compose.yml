@@ -9,6 +9,7 @@ services:
       MONGODB_DB: ${MONGODB_DB:-yacms}
       SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-7}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      MEDIA_ENCRYPTION_KEY: ${MEDIA_ENCRYPTION_KEY}
     ports:
       - "${APP_PORT:-3000}:3000"
     depends_on:
