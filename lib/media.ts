@@ -6,6 +6,7 @@ import { Types } from "mongoose"
 import { dbConnect } from "@/lib/mongodb"
 import { StorageConnectionModel } from "@/lib/models/storage-connection"
 import { MediaAssetModel } from "@/lib/models/media-asset"
+import { TenantModel } from "@/lib/models/tenant"
 import { ContentEntryModel } from "@/lib/models/content-entry"
 
 function encryptionKey() {
@@ -140,12 +141,14 @@ export async function removeTenantMedia(tenantId: string) {
   await StorageConnectionModel.deleteMany({ tenantId: tenantObjectId })
 }
 
-export async function mediaUrl(tenantId: string, mediaId: string) {
+export async function mediaUrl(tenantReference: string, mediaId: string) {
   if (!Types.ObjectId.isValid(mediaId)) return null
   await dbConnect()
-  const asset = await MediaAssetModel.findOne({ _id: new Types.ObjectId(mediaId), tenantId: new Types.ObjectId(tenantId) }).exec()
+  const asset = await MediaAssetModel.findById(mediaId).exec()
   if (!asset) return null
-  const connection = await StorageConnectionModel.findOne({ _id: asset.connectionId, tenantId: new Types.ObjectId(tenantId) }).exec()
+  const tenant = await TenantModel.findById(asset.tenantId).select("slug").lean().exec()
+  if (!tenant || (tenantReference !== tenant.slug && tenantReference !== tenant._id.toString())) return null
+  const connection = await StorageConnectionModel.findOne({ _id: asset.connectionId, tenantId: asset.tenantId }).exec()
   if (!connection) return null
   const s3 = savedClient(connection)
   try { return await getSignedUrl(s3, new GetObjectCommand({ Bucket: connection.bucket, Key: asset.key }), { expiresIn: 3600 }) }

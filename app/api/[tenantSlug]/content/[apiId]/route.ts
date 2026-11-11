@@ -6,21 +6,21 @@ import { authenticateContentApi } from "@/lib/tenant-api-token"
 
 export async function GET(
   request: Request,
-  context: RouteContext<"/api/content/[tenantId]/[apiId]">
+  context: RouteContext<"/api/[tenantSlug]/content/[apiId]">
 ) {
-  const { tenantId, apiId } = await context.params
-  const resolvedTenantId = await authenticateContentApi(tenantId, request.headers.get("authorization"))
-  if (!resolvedTenantId) {
+  const { tenantSlug, apiId } = await context.params
+  const tenantId = await authenticateContentApi(tenantSlug, request.headers.get("authorization"))
+  if (!tenantId) {
     return Response.json({ error: "Unauthorized." }, { status: 401, headers: { "Cache-Control": "no-store", "WWW-Authenticate": "Bearer" } })
   }
 
-  const contentType = await findContentTypeByApiId(resolvedTenantId, apiId)
+  const contentType = await findContentTypeByApiId(tenantId, apiId)
   if (!contentType) {
     return Response.json({ error: "Content type not found." }, { status: 404 })
   }
 
   const entries = await listContentEntries({
-    tenantId: resolvedTenantId,
+    tenantId,
     contentTypeId: contentType.id,
     publishedOnly: true,
   })
@@ -30,8 +30,8 @@ export async function GET(
     for (const field of contentType.fields.filter((item) => item.type === "media")) {
       const selected = values[field.apiId]
       values[field.apiId] = Array.isArray(selected)
-        ? await Promise.all(selected.map((id) => mediaReferenceUrl(resolvedTenantId, String(id), request.url)))
-        : typeof selected === "string" ? await mediaReferenceUrl(resolvedTenantId, selected, request.url) : null
+        ? await Promise.all(selected.map((id) => mediaReferenceUrl(tenantId, tenantSlug, String(id), request.url)))
+        : typeof selected === "string" ? await mediaReferenceUrl(tenantId, tenantSlug, selected, request.url) : null
     }
     return { id: entry.id, ...values, createdAt: entry.createdAt.toISOString(), updatedAt: entry.updatedAt.toISOString() }
   }))
@@ -51,16 +51,12 @@ export async function GET(
       },
       data,
     },
-    {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    }
+    { headers: { "Cache-Control": "no-store" } }
   )
 }
 
-async function mediaReferenceUrl(tenantId: string, mediaId: string, requestUrl: string) {
+async function mediaReferenceUrl(tenantId: string, tenantSlug: string, mediaId: string, requestUrl: string) {
   if (mediaId.startsWith("/")) return isLocalMediaPath(mediaId) ? mediaId : null
   if (!(await mediaIdsExist(tenantId, [mediaId]))) return null
-  return new URL(`/api/content/${tenantId}/media/${mediaId}`, requestUrl).toString()
+  return new URL(`/api/${encodeURIComponent(tenantSlug)}/media/${mediaId}`, requestUrl).toString()
 }

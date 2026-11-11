@@ -68,7 +68,7 @@ function ApiTokenForm({
     () => window.location.origin,
     () => "https://your-cms-host"
   )
-  const apiUrl = `${origin}/api/content/${slug}`
+  const apiUrl = `${origin}/api/${slug}/content`
 
   async function copyToken() {
     if (!state.token) return
