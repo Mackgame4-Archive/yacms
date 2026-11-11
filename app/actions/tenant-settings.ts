@@ -6,11 +6,37 @@ import { redirect } from "next/navigation"
 import { requireUser } from "@/lib/auth"
 import { getTenantContext, setCurrentTenant } from "@/lib/tenant-context"
 import { deleteTenant, updateTenantName } from "@/lib/tenants"
+import { regenerateTenantApiToken } from "@/lib/tenant-api-token"
 
 export type TenantSettingsState = {
   status?: "error" | "success"
   message?: string
   name?: string
+}
+
+export type ApiTokenState = {
+  status?: "error" | "success"
+  message?: string
+  token?: string
+}
+
+export async function regenerateTenantApiTokenAction(
+  _state: ApiTokenState
+): Promise<ApiTokenState> {
+  void _state
+  const user = await requireUser()
+  const { currentTenant } = await getTenantContext(user.id)
+  if (!currentTenant) return { status: "error", message: "Select a website first." }
+
+  try {
+    const token = await regenerateTenantApiToken(currentTenant.id, user.id)
+    if (!token) return { status: "error", message: "Website could not be found." }
+    revalidatePath("/settings")
+    return { status: "success", message: "Copy this token now. It will not be shown again.", token }
+  } catch (error) {
+    console.error("API token generation failed", error)
+    return { status: "error", message: "Could not generate an API token. Please try again." }
+  }
 }
 
 function text(formData: FormData, field: string) {

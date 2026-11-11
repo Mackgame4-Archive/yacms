@@ -13,6 +13,9 @@ export type TenantRecord = {
   ownerId: Types.ObjectId
   name: string
   slug: string
+  apiTokenHash?: string
+  apiTokenLast4?: string
+  apiTokenCreatedAt?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -37,6 +40,9 @@ const tenantSchema = new Schema<TenantRecord>(
       maxlength: 63,
       match: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
     },
+    apiTokenHash: { type: String, select: false, unique: true, sparse: true },
+    apiTokenLast4: String,
+    apiTokenCreatedAt: Date,
   },
   { timestamps: true }
 )

@@ -1,26 +1,26 @@
-import { Types } from "mongoose"
-
 import { listContentEntries } from "@/lib/content-entries"
 import { findContentTypeByApiId } from "@/lib/content-types"
 import { mediaIdsExist } from "@/lib/media"
 import { isLocalMediaPath } from "@/lib/media-path"
+import { authenticateContentApi } from "@/lib/tenant-api-token"
 
 export async function GET(
   request: Request,
   context: RouteContext<"/api/content/[tenantId]/[apiId]">
 ) {
   const { tenantId, apiId } = await context.params
-  if (!Types.ObjectId.isValid(tenantId)) {
-    return Response.json({ error: "Content source not found." }, { status: 404 })
+  const resolvedTenantId = await authenticateContentApi(tenantId, request.headers.get("authorization"))
+  if (!resolvedTenantId) {
+    return Response.json({ error: "Unauthorized." }, { status: 401, headers: { "Cache-Control": "no-store", "WWW-Authenticate": "Bearer" } })
   }
 
-  const contentType = await findContentTypeByApiId(tenantId, apiId)
+  const contentType = await findContentTypeByApiId(resolvedTenantId, apiId)
   if (!contentType) {
     return Response.json({ error: "Content type not found." }, { status: 404 })
   }
 
   const entries = await listContentEntries({
-    tenantId,
+    tenantId: resolvedTenantId,
     contentTypeId: contentType.id,
     publishedOnly: true,
   })
@@ -30,8 +30,8 @@ export async function GET(
     for (const field of contentType.fields.filter((item) => item.type === "media")) {
       const selected = values[field.apiId]
       values[field.apiId] = Array.isArray(selected)
-        ? await Promise.all(selected.map((id) => mediaReferenceUrl(tenantId, String(id), request.url)))
-        : typeof selected === "string" ? await mediaReferenceUrl(tenantId, selected, request.url) : null
+        ? await Promise.all(selected.map((id) => mediaReferenceUrl(resolvedTenantId, String(id), request.url)))
+        : typeof selected === "string" ? await mediaReferenceUrl(resolvedTenantId, selected, request.url) : null
     }
     return { id: entry.id, ...values, createdAt: entry.createdAt.toISOString(), updatedAt: entry.updatedAt.toISOString() }
   }))

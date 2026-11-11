@@ -8,14 +8,21 @@ YACMS is schema-driven. Tenants create their own content types from reusable
 field definitions, including relations to other content types. Content is
 stored as generic entries rather than domain-specific database models.
 
-Published entries are available through the generic read API:
+Published entries are available through the generic read API. Create a token in
+Website settings and send it in the Authorization header:
 
 ```text
-GET /api/content/:tenantId/:contentTypeApiId
+GET /api/content/:tenantSlug/:contentTypeApiId
+Authorization: Bearer <api-token>
 ```
 
 Connected sites own the adapter that maps a generic response to their local
 view models. Domain concepts stay out of the CMS core.
+
+For an Astro site, configure `CMS_URL_API=https://cms.example.com/api/content/your-slug`
+and `CMS_API_TOKEN` in its server or build environment, then request
+`${CMS_URL_API}/your-content-type` with the bearer header. Regenerating a token
+immediately invalidates the previous one. The token is shown only when created.
 
 ## Media storage
 
