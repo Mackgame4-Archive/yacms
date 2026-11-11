@@ -92,3 +92,62 @@ export async function findUserById(id: string) {
   const user = await UserModel.findById(id).exec()
   return user ? toSafeUser(user) : null
 }
+
+export type UserUpdateResult =
+  | "updated"
+  | "invalid-password"
+  | "email-taken"
+  | "not-found"
+
+export async function updateUserProfile(input: {
+  userId: string
+  name: string
+  email: string
+  currentPassword: string
+}): Promise<UserUpdateResult> {
+  if (!Types.ObjectId.isValid(input.userId)) return "not-found"
+
+  await dbConnect()
+  await UserModel.init()
+  const user = await UserModel.findById(input.userId)
+    .select("+passwordHash")
+    .exec()
+
+  if (!user) return "not-found"
+  if (!(await passwordMatches(input.currentPassword, user.passwordHash))) {
+    return "invalid-password"
+  }
+
+  user.name = input.name
+  user.email = normalizeEmail(input.email)
+
+  try {
+    await user.save()
+    return "updated"
+  } catch (error) {
+    if ((error as { code?: number }).code === 11000) return "email-taken"
+    throw error
+  }
+}
+
+export async function updateUserPassword(input: {
+  userId: string
+  currentPassword: string
+  newPassword: string
+}): Promise<Exclude<UserUpdateResult, "email-taken">> {
+  if (!Types.ObjectId.isValid(input.userId)) return "not-found"
+
+  await dbConnect()
+  const user = await UserModel.findById(input.userId)
+    .select("+passwordHash")
+    .exec()
+
+  if (!user) return "not-found"
+  if (!(await passwordMatches(input.currentPassword, user.passwordHash))) {
+    return "invalid-password"
+  }
+
+  user.passwordHash = await hashPassword(input.newPassword)
+  await user.save()
+  return "updated"
+}

@@ -85,3 +85,9 @@ export async function deleteSession() {
     await SessionModel.deleteOne({ tokenHash: tokenHash(token) })
   }
 }
+
+export async function deleteUserSessions(userId: string) {
+  if (!Types.ObjectId.isValid(userId)) return
+  await dbConnect()
+  await SessionModel.deleteMany({ userId: new Types.ObjectId(userId) })
+}

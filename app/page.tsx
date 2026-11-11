@@ -1,7 +1,4 @@
-import Image from "next/image"
-
-import { logout } from "@/app/actions/auth"
-import { Button } from "@/components/ui/button"
+import { AppHeader } from "@/components/app-header"
 import { requireUser } from "@/lib/auth"
 
 export default async function Page() {
@@ -9,32 +6,7 @@ export default async function Page() {
 
   return (
     <main className="min-h-svh bg-[radial-gradient(circle_at_top_left,var(--color-muted),transparent_35%)]">
-      <header className="border-b bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/cms-logo.svg"
-              alt=""
-              width={256}
-              height={256}
-              className="size-9"
-              priority
-            />
-            <span className="font-semibold tracking-tight">YACMS</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
-            </div>
-            <form action={logout}>
-              <Button type="submit" variant="outline">
-                Log out
-              </Button>
-            </form>
-          </div>
-        </div>
-      </header>
+      <AppHeader user={user} />
 
       <section className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
         <div className="max-w-2xl">
@@ -45,8 +17,8 @@ export default async function Page() {
             Welcome back, {user.name.split(" ")[0]}.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
-            This page is protected. Only people with a valid signed session can
-            view its content.
+            This page is protected. Only people with a valid database session
+            can view its content.
           </p>
         </div>
 

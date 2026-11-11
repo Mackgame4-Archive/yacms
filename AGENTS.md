@@ -15,3 +15,14 @@ Add shadcn/ui components with:
 ```bash
 npx shadcn@latest add <component>
 ```
+
+Before using or composing a generated shadcn/ui component, read its matching
+official Base UI variant documentation at
+`https://ui.shadcn.com/docs/components/base/<component>`. When the component
+wraps a Base UI primitive, also check the primitive API at
+`https://base-ui.com/react/components/<component>` before writing code.
+
+Follow the documented component hierarchy and composition contract exactly.
+In particular, preserve required context wrappers such as menu groups and set
+`nativeButton` explicitly when a Base UI `render` prop replaces an element with
+a native `<button>`.
