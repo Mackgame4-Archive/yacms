@@ -45,7 +45,12 @@ function client(input: { region: string; endpoint?: string; accessKeyId: string;
 }
 
 function savedClient(connection: { region: string; endpoint?: string; accessKeyId: string; encryptedSecret: string }) {
-  return client({ ...connection, secretAccessKey: decrypt(connection.encryptedSecret) })
+  return client({
+    region: connection.region,
+    endpoint: connection.endpoint,
+    accessKeyId: connection.accessKeyId,
+    secretAccessKey: decrypt(connection.encryptedSecret),
+  })
 }
 
 export async function listConnections(tenantId: string) {
