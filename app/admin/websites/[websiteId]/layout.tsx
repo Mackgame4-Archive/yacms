@@ -1,0 +1,5 @@
+import Link from "next/link";
+import { authorizeWebsite } from "@/lib/auth";
+import { Website } from "@/lib/models";
+import { notFound } from "next/navigation";
+export default async function WebsiteLayout({ children, params }: { children: React.ReactNode; params: Promise<{ websiteId: string }> }) { const { websiteId } = await params; const access = await authorizeWebsite(websiteId); const site = await Website.findById(access.websiteId).select("name slug").lean(); if (!site) notFound(); const base = `/admin/websites/${websiteId}`; const managesAccess = access.role !== "editor"; return <div><div className="site-bar"><div><span className="site-icon small">{site.name.slice(0,1)}</span><strong>{site.name}</strong><small>{site.slug}</small></div><nav><Link href={`${base}/pages`}>Pages</Link><Link href={`${base}/settings`}>Settings</Link><Link href={`${base}/media`}>Media</Link>{managesAccess && <><Link href={`${base}/api-keys`}>API keys</Link><Link href={`${base}/members`}>Members</Link></>}</nav></div>{children}</div>; }
