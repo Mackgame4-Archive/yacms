@@ -29,6 +29,10 @@ function decrypt(value: string) {
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8")
 }
 
+export function decryptStorageSecret(value: string) {
+  return decrypt(value)
+}
+
 type ConnectionInput = { name: string; bucket: string; region: string; endpoint?: string; accessKeyId: string; secretAccessKey: string }
 
 function client(input: { region: string; endpoint?: string; accessKeyId: string; secretAccessKey: string }) {

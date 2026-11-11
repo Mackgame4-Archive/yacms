@@ -36,6 +36,12 @@ Existing content with path based media values must be uploaded to S3 and
 reselected in the content editor. The public API returns `null` for those
 legacy values until they are migrated.
 
+Select a connection name on the Media page to browse its bucket. The explorer
+lists existing objects and folders, supports uploads, file renaming, downloads,
+and creates folder markers. It only deletes empty folders, and it will not
+delete an object referenced by a content entry. File renaming uses S3 copy and
+delete, so the connection needs list, read, write, and delete permissions.
+
 ## Authentication
 
 Accounts and sessions are stored in MongoDB using typed Mongoose models.
