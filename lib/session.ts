@@ -1,110 +1,87 @@
 import "server-only"
 
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto"
-import { mkdir, readFile, writeFile } from "node:fs/promises"
-import path from "node:path"
+import { createHash, randomBytes } from "node:crypto"
+import { Types } from "mongoose"
 import { cookies } from "next/headers"
 
-const cookieName = "yacms_session"
-const sessionLength = 7 * 24 * 60 * 60 * 1000
-const dataDirectory = path.join(process.cwd(), "data")
-const secretFile = path.join(dataDirectory, ".session-secret")
+import { dbConnect } from "@/lib/mongodb"
+import { SessionModel } from "@/lib/models/session"
 
-type SessionPayload = {
-  userId: string
-  expiresAt: number
+const cookieName = "yacms_session_v1"
+const defaultSessionDays = 7
+
+function sessionDuration() {
+  const configuredDays = Number(process.env.SESSION_TTL_DAYS || defaultSessionDays)
+  const days =
+    Number.isFinite(configuredDays) && configuredDays > 0
+      ? configuredDays
+      : defaultSessionDays
+  return days * 24 * 60 * 60 * 1000
 }
 
-let secretPromise: Promise<Buffer> | undefined
-
-async function loadSecret() {
-  if (process.env.SESSION_SECRET) {
-    return Buffer.from(process.env.SESSION_SECRET)
-  }
-
-  try {
-    return await readFile(secretFile)
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error
-
-    await mkdir(dataDirectory, { recursive: true })
-    const generatedSecret = randomBytes(32)
-    try {
-      await writeFile(secretFile, generatedSecret, { flag: "wx", mode: 0o600 })
-      return generatedSecret
-    } catch (writeError) {
-      if ((writeError as NodeJS.ErrnoException).code === "EEXIST") {
-        return readFile(secretFile)
-      }
-      throw writeError
-    }
-  }
+function tokenHash(token: string) {
+  return createHash("sha256").update(token).digest("base64url")
 }
 
-function getSecret() {
-  secretPromise ??= loadSecret()
-  return secretPromise
-}
-
-async function sign(value: string) {
-  return createHmac("sha256", await getSecret()).update(value).digest("base64url")
-}
-
-async function encodeSession(payload: SessionPayload) {
-  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url")
-  return `${encodedPayload}.${await sign(encodedPayload)}`
-}
-
-async function decodeSession(value?: string): Promise<SessionPayload | null> {
-  if (!value) return null
-  const [encodedPayload, suppliedSignature] = value.split(".")
-  if (!encodedPayload || !suppliedSignature) return null
-
-  const expectedSignature = await sign(encodedPayload)
-  const supplied = Buffer.from(suppliedSignature)
-  const expected = Buffer.from(expectedSignature)
-  if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
-    return null
-  }
-
-  try {
-    const payload = JSON.parse(
-      Buffer.from(encodedPayload, "base64url").toString("utf8")
-    ) as SessionPayload
-
-    if (
-      typeof payload.userId !== "string" ||
-      typeof payload.expiresAt !== "number" ||
-      payload.expiresAt <= Date.now()
-    ) {
-      return null
-    }
-
-    return payload
-  } catch {
-    return null
-  }
+function shouldUseSecureCookies() {
+  if (process.env.COOKIE_SECURE === "false") return false
+  if (process.env.COOKIE_SECURE === "true") return true
+  return process.env.NODE_ENV === "production"
 }
 
 export async function createSession(userId: string) {
-  const expiresAt = Date.now() + sessionLength
-  const value = await encodeSession({ userId, expiresAt })
-  const cookieStore = await cookies()
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new Error("Cannot create a session for an invalid user.")
+  }
 
-  cookieStore.set(cookieName, value, {
+  await dbConnect()
+  await SessionModel.init()
+
+  const cookieStore = await cookies()
+  const previousToken = cookieStore.get(cookieName)?.value
+
+  if (previousToken) {
+    await SessionModel.deleteOne({ tokenHash: tokenHash(previousToken) })
+  }
+
+  const token = randomBytes(32).toString("base64url")
+  const expiresAt = new Date(Date.now() + sessionDuration())
+
+  await SessionModel.create({
+    tokenHash: tokenHash(token),
+    userId: new Types.ObjectId(userId),
+    expiresAt,
+  })
+
+  cookieStore.set(cookieName, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookies(),
     sameSite: "lax",
-    expires: new Date(expiresAt),
+    expires: expiresAt,
     path: "/",
   })
 }
 
 export async function readSession() {
-  const value = (await cookies()).get(cookieName)?.value
-  return decodeSession(value)
+  const token = (await cookies()).get(cookieName)?.value
+  if (!token) return null
+
+  await dbConnect()
+  const session = await SessionModel.findOne({
+    tokenHash: tokenHash(token),
+    expiresAt: { $gt: new Date() },
+  }).exec()
+
+  return session ? { userId: session.userId.toString() } : null
 }
 
 export async function deleteSession() {
-  ;(await cookies()).delete(cookieName)
+  const cookieStore = await cookies()
+  const token = cookieStore.get(cookieName)?.value
+  cookieStore.delete(cookieName)
+
+  if (token) {
+    await dbConnect()
+    await SessionModel.deleteOne({ tokenHash: tokenHash(token) })
+  }
 }

@@ -1,15 +1,21 @@
 import "server-only"
 
 import { cache } from "react"
-import { redirect } from "next/navigation"
+import { redirect, unstable_rethrow } from "next/navigation"
 
 import { readSession } from "@/lib/session"
-import { findUserById } from "@/lib/user-store"
+import { findUserById } from "@/lib/users"
 
 export const getCurrentUser = cache(async () => {
-  const session = await readSession()
-  if (!session) return null
-  return findUserById(session.userId)
+  try {
+    const session = await readSession()
+    if (!session) return null
+    return findUserById(session.userId)
+  } catch (error) {
+    unstable_rethrow(error)
+    console.error("Unable to read the current session", error)
+    return null
+  }
 })
 
 export async function requireUser() {

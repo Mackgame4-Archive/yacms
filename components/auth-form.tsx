@@ -66,12 +66,13 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             type="password"
             autoComplete={isRegister ? "new-password" : "current-password"}
             aria-describedby={isRegister ? "password-description" : undefined}
+            maxLength={128}
             className="h-11 shadow-xs"
             required
           />
           {isRegister && (
             <FieldDescription id="password-description">
-              Use at least 8 characters with a letter and number.
+              Use 8–128 characters with a letter and number.
             </FieldDescription>
           )}
         </Field>
@@ -84,6 +85,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               name="confirmPassword"
               type="password"
               autoComplete="new-password"
+              maxLength={128}
               className="h-11 shadow-xs"
               required
             />
