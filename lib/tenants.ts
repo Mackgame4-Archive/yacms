@@ -68,3 +68,48 @@ export async function createTenant(input: {
     throw error
   }
 }
+
+export async function updateTenantName(input: {
+  tenantId: string
+  ownerId: string
+  name: string
+}) {
+  if (
+    !Types.ObjectId.isValid(input.tenantId) ||
+    !Types.ObjectId.isValid(input.ownerId)
+  ) {
+    return false
+  }
+
+  await dbConnect()
+  const result = await TenantModel.updateOne(
+    {
+      _id: new Types.ObjectId(input.tenantId),
+      ownerId: new Types.ObjectId(input.ownerId),
+    },
+    { $set: { name: input.name } },
+    { runValidators: true }
+  )
+
+  return result.matchedCount === 1
+}
+
+export async function deleteTenant(input: {
+  tenantId: string
+  ownerId: string
+}) {
+  if (
+    !Types.ObjectId.isValid(input.tenantId) ||
+    !Types.ObjectId.isValid(input.ownerId)
+  ) {
+    return false
+  }
+
+  await dbConnect()
+  const result = await TenantModel.deleteOne({
+    _id: new Types.ObjectId(input.tenantId),
+    ownerId: new Types.ObjectId(input.ownerId),
+  })
+
+  return result.deletedCount === 1
+}
