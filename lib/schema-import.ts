@@ -208,7 +208,7 @@ function parseCmsImportFile(source: string): CmsImportFile {
 function parseContentType(value: unknown, index: number): ImportedContentType {
   const path = `contentTypes[${index}]`
   if (!isRecord(value)) throw new Error(`${path} must be an object.`)
-  const name = requiredString(value.name, `${path}.name`, 80)
+  const name = requiredString(value.name, `${path}.name`, 80, 2)
   const apiId = requiredApiId(value.apiId, `${path}.apiId`)
   const description = optionalString(value.description, `${path}.description`, 500)
   if (!Array.isArray(value.fields) || value.fields.length > 100) {
@@ -276,7 +276,12 @@ function parseContentEntry(
   }
   for (const field of fields) {
     const fieldValue = value.values[field.apiId]
-    if (fieldValue === undefined || fieldValue === null || fieldValue === "") {
+    if (
+      fieldValue === undefined ||
+      fieldValue === null ||
+      fieldValue === "" ||
+      (Array.isArray(fieldValue) && fieldValue.length === 0)
+    ) {
       if (field.required) {
         throw new Error(`${path}.values.${field.apiId} is required.`)
       }
@@ -331,7 +336,7 @@ function parseForm(value: unknown, index: number): ImportedForm {
   )
   assertUniqueApiIds(fields, `${path} field`)
   return {
-    name: requiredString(value.name, `${path}.name`, 80),
+    name: requiredString(value.name, `${path}.name`, 80, 2),
     apiId: requiredApiId(value.apiId, `${path}.apiId`),
     description: optionalString(value.description, `${path}.description`, 500),
     fields,
@@ -362,9 +367,18 @@ function assertUniqueApiIds(items: Array<{ apiId: string }>, label: string) {
   }
 }
 
-function requiredString(value: unknown, path: string, maxLength: number) {
-  if (typeof value !== "string" || !value.trim() || value.trim().length > maxLength) {
-    throw new Error(`${path} must be 1–${maxLength} characters.`)
+function requiredString(
+  value: unknown,
+  path: string,
+  maxLength: number,
+  minLength = 1
+) {
+  if (
+    typeof value !== "string" ||
+    value.trim().length < minLength ||
+    value.trim().length > maxLength
+  ) {
+    throw new Error(`${path} must be ${minLength}–${maxLength} characters.`)
   }
   return value.trim()
 }
