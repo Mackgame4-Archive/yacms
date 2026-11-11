@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <title>YACMS</title>
+  <g fill="#4F46E5">
+    <path d="M28 124a100 100 0 0 1 200 0h-16a84 84 0 0 0-168 0H28Z"/>
+    <rect x="28" y="148" width="56" height="76" rx="12"/>
+    <rect x="100" y="112" width="56" height="112" rx="12"/>
+    <rect x="172" y="148" width="56" height="76" rx="12"/>
+  </g>
+  <g fill="#FFF">
+    <rect x="42" y="163" width="28" height="6" rx="3"/>
+    <rect x="114" y="127" width="28" height="6" rx="3"/>
+    <rect x="186" y="163" width="28" height="6" rx="3"/>
+  </g>
+  <g fill="#FFF" opacity=".4">
+    <rect x="42" y="180" width="20" height="6" rx="3"/>
+    <rect x="114" y="144" width="20" height="6" rx="3"/>
+    <rect x="186" y="180" width="20" height="6" rx="3"/>
+  </g>
+</svg>
