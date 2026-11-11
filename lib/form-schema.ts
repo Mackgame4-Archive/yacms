@@ -28,6 +28,12 @@ export type SafeFormSchema = {
   updatedAt: Date
 }
 
+export type SafeFormSubmission = {
+  id: string
+  values: Record<string, string | number | boolean>
+  createdAt: Date
+}
+
 export type SubmissionValidation =
   | { success: true; values: Record<string, string | number | boolean> }
   | { success: false; fields: Record<string, string> }

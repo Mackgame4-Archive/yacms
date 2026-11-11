@@ -6,6 +6,7 @@ import { Types } from "mongoose"
 import {
   type FormFieldType,
   type SafeFormSchema,
+  type SafeFormSubmission,
   validateFormSubmission,
 } from "@/lib/form-schema"
 import { dbConnect } from "@/lib/mongodb"
@@ -55,6 +56,33 @@ export async function findFormForTenant(tenantId: string, formId: string) {
     tenantId: new Types.ObjectId(tenantId),
   }).exec()
   return form ? toSafeFormSchema(form) : null
+}
+
+export async function listFormSubmissions(
+  tenantId: string,
+  formId: string,
+  limit = 100
+): Promise<SafeFormSubmission[]> {
+  if (!Types.ObjectId.isValid(tenantId) || !Types.ObjectId.isValid(formId)) {
+    return []
+  }
+  await dbConnect()
+  const submissions = await FormSubmissionModel.find({
+    tenantId: new Types.ObjectId(tenantId),
+    formId: new Types.ObjectId(formId),
+  })
+    .sort({ createdAt: -1, _id: -1 })
+    .limit(Math.min(Math.max(limit, 1), 100))
+    .exec()
+
+  return submissions.map((submission) => ({
+    id: submission._id.toString(),
+    values: Object.fromEntries(submission.values.entries()) as Record<
+      string,
+      string | number | boolean
+    >,
+    createdAt: submission.createdAt,
+  }))
 }
 
 export async function createFormSchema(input: {

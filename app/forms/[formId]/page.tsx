@@ -30,28 +30,38 @@ export default async function FormSchemaPage({
     <main className="min-h-svh bg-muted/30">
       <AppHeader user={user} />
       <section className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-        <div className="mb-8">
-          <div className="flex items-center gap-1">
-            <Link
-              href="/forms"
-              aria-label="Back to forms"
-              title="Back to forms"
-              className={buttonVariants({
-                variant: "ghost",
-                size: "icon",
-                className: "-ml-2",
-              })}
-            >
-              <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
-            </Link>
-            <p className="text-sm font-medium text-muted-foreground">Forms</p>
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/forms"
+                aria-label="Back to forms"
+                title="Back to forms"
+                className={buttonVariants({
+                  variant: "ghost",
+                  size: "icon",
+                  className: "-ml-2",
+                })}
+              >
+                <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
+              </Link>
+              <p className="text-sm font-medium text-muted-foreground">
+                Forms
+              </p>
+            </div>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+              {form.name}
+            </h1>
+            <p className="mt-3 font-mono text-sm text-muted-foreground">
+              {form.apiId}
+            </p>
           </div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            {form.name}
-          </h1>
-          <p className="mt-3 font-mono text-sm text-muted-foreground">
-            {form.apiId}
-          </p>
+          <Link
+            href={`/forms/${form.id}/submissions`}
+            className={buttonVariants({ variant: "default" })}
+          >
+            View submissions
+          </Link>
         </div>
 
         <FormEndpointField
